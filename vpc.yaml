@@ -7,3 +7,5 @@ Resources:
         Tags: 
           - Key: "Purpose"
             Value: "Homework"
+          - Key: "Name"
+            Value: "homework-app-vpc-cf"
