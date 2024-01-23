@@ -89,7 +89,12 @@ Resources:
           Value: "HW-IGW"
         - Key: "Purpose"
           Value: !Ref Purpose
-  
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !GetAtt MyHomeworkVPC.VpcId
+
   PubRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -113,7 +118,7 @@ Resources:
 
   AttachIGWtoRouteTable:
     Type: AWS::EC2::GatewayRouteTableAssociation
-    DependsOn: PubRouteTable
+    DependsOn: InternetGatewayAttachment
     Properties:
       GatewayId: !GetAtt HomeworkIGW.InternetGatewayId
       RouteTableId: !GetAtt PubRouteTable.RouteTableId
