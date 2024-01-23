@@ -108,7 +108,7 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !GetAtt PubRouteTable.RouteTableId
-      SubnetId: !GetAtt PublicSubnet2a.SubnetId
+      SubnetId: !GetAtt PublicSubnet1b.SubnetId
 
 
   AttachIGWtoRouteTable:
@@ -116,7 +116,7 @@ Resources:
     DependsOn: PubRouteTable
     Properties:
       GatewayId: !GetAtt HomeworkIGW.InternetGatewayId
-      RouteTableId: String
+      RouteTableId: !GetAtt PubRouteTable.RouteTableId
 
 
   PrivateRouteTable:
@@ -137,4 +137,4 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !GetAtt PrivateRouteTable.RouteTableId
-      SubnetId: !GetAtt PrivateSubnet2a.SubnetId
+      SubnetId: !GetAtt PrivateSubnet1b.SubnetId
