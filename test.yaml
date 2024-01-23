@@ -46,7 +46,7 @@ Resources:
           Value: "public-subnet-1a"
         - Key: "Purpose"
           Value: !Ref Purpose
-      VpcId: !GetAtt MyHomeworkVPC.VpcID
+      VpcId: !GetAtt MyHomeworkVPC
   PublicSubnet1b:
     Type: AWS::EC2::Subnet
     Properties:
@@ -57,7 +57,7 @@ Resources:
           Value: "public-subnet-1b"
         - Key: "Purpose"
           Value: !Ref Purpose
-      VpcId: !GetAtt MyHomeworkVPC.VpcID
+      VpcId: !GetAtt MyHomeworkVPC
   PrivateSubnet1a:
     Type: AWS::EC2::Subnet
     Properties:
@@ -68,7 +68,7 @@ Resources:
           Value: "private-subnet-1a"
         - Key: "Purpose"
           Value: !Ref Purpose
-      VpcId: !GetAtt MyHomeworkVPC.VpcID
+      VpcId: !GetAtt MyHomeworkVPC
   PrivateSubnet1b:
     Type: AWS::EC2::Subnet
     Properties:
@@ -79,4 +79,4 @@ Resources:
           Value: "private-subnet-1b"
         - Key: "Purpose"
           Value: !Ref Purpose
-      VpcId: !GetAtt MyHomeworkVPC.VpcID
+      VpcId: !GetAtt MyHomeworkVPC
