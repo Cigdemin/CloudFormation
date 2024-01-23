@@ -119,7 +119,7 @@ Resources:
 
   AttachIGWtoRouteTable:
     Type: AWS::EC2::GatewayRouteTableAssociation
-    DependsOn: PubRouteTable
+    DependsOn: InternetGatewayAttachment
     Properties:
       GatewayId: !GetAtt HomeworkIGW.InternetGatewayId
       RouteTableId: !GetAtt PubRouteTable.RouteTableId
