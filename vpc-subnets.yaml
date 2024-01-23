@@ -116,13 +116,19 @@ Resources:
       RouteTableId: !GetAtt PubRouteTable.RouteTableId
       SubnetId: !GetAtt PublicSubnet1b.SubnetId
 
-
-  AttachIGWtoRouteTable:
-    Type: AWS::EC2::GatewayRouteTableAssociation
+  IGWRoute:
+    Type: AWS::EC2::Route
     DependsOn: InternetGatewayAttachment
     Properties:
-      GatewayId: !GetAtt HomeworkIGW.InternetGatewayId
-      RouteTableId: !GetAtt PubRouteTable.RouteTableId
+       RouteTableId: !GetAtt PubRouteTable.RouteTableId
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId: !GetAtt HomeworkIGW.InternetGatewayId
+#  AttachIGWtoRouteTable:
+#    Type: AWS::EC2::GatewayRouteTableAssociation
+#    DependsOn: InternetGatewayAttachment
+#    Properties:
+#      GatewayId: !GetAtt HomeworkIGW.InternetGatewayId
+#      RouteTableId: !GetAtt PubRouteTable.RouteTableId
 
 
   PrivateRouteTable:
