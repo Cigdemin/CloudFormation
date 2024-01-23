@@ -89,10 +89,11 @@ Resources:
           Value: "HW-IGW"
         - Key: "Purpose"
           Value: !Ref Purpose
+
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      InternetGatewayId: !Ref InternetGateway
+      InternetGatewayId: !GetAttGet HomeworkIGW.InternetGatewayId
       VpcId: !GetAtt MyHomeworkVPC.VpcId
 
   PubRouteTable:
