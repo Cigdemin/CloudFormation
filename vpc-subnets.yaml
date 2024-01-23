@@ -80,3 +80,61 @@ Resources:
         - Key: "Purpose"
           Value: !Ref Purpose
       VpcId: !GetAtt MyHomeworkVPC.VpcId
+
+  HomeworkIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "HW-IGW"
+        - Key: "Purpose"
+          Value: !Ref Purpose
+  
+  PubRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !GetAtt MyHomeworkVPC.VpcId
+      Tags:
+        - Key: "Name"
+          Value: "Public-Rt-cf"
+        - Key: "Purpose"
+          Value: !Ref Purpose
+  PubSubnetRouteAssotiation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !GetAtt PubRouteTable.RouteTableId
+      SubnetId: !GetAtt PublicSubnet1a.SubnetId
+  PubSubnetRouteAssotiation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !GetAtt PubRouteTable.RouteTableId
+      SubnetId: !GetAtt PublicSubnet2a.SubnetId
+
+
+  AttachIGWtoRouteTable:
+    Type: AWS::EC2::GatewayRouteTableAssociation
+    DependsOn: PubRouteTable
+    Properties:
+      GatewayId: !GetAtt HomeworkIGW.InternetGatewayId
+      RouteTableId: String
+
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !GetAtt MyHomeworkVPC.VpcId
+      Tags:
+        - Key: "Name"
+          Value: "Private-Rt-cf"
+        - Key: "Purpose"
+          Value: !Ref Purpose
+  PrivateSubnetRouteAssotiation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !GetAtt PrivateRouteTable.RouteTableId
+      SubnetId: !GetAtt PrivateSubnet1a.SubnetId
+  PrivateSubnetRouteAssotiation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !GetAtt PrivateRouteTable.RouteTableId
+      SubnetId: !GetAtt PrivateSubnet2a.SubnetId
