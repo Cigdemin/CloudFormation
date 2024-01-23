@@ -93,7 +93,7 @@ Resources:
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      InternetGatewayId: !GetAttGet HomeworkIGW.InternetGatewayId
+      InternetGatewayId: !GetAtt HomeworkIGW.InternetGatewayId
       VpcId: !GetAtt MyHomeworkVPC.VpcId
 
   PubRouteTable:
