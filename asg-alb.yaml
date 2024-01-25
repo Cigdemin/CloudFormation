@@ -17,6 +17,7 @@ Parameters:
     Description: This is the Tag for the Purpose of the task
     Type: String
     Default: "Homework"
+    
 Resources:
   HoweworkLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -31,7 +32,7 @@ Resources:
         - Key: "Purpose"
           Value: !Ref Purpose
         - Key: "Name"
-          Value: "hw-app-lt-cf"
+          Value: "hw-lt-cf"
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash 
@@ -40,3 +41,58 @@ Resources:
           echo "home work complete" >> /var/www/html/index.html
           systemctl start httpd 
           systemctl enable httpd 
+
+  HWAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: 
+        - us-east-1a
+        - us-east-1b
+      DesiredCapacity: "3"
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref HoweworkLaunchTemplate
+      LoadBalancerNames: 
+        - String
+      MaxSize: "5"
+      MinSize: "2"
+      Tags: 
+        - Key: "Purpose"
+          Value: !Ref Purpose
+        - Key: "Name"
+          Value: "hw-asg-cf"
+
+    HWApplicationLoadBalancer:
+      Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+      Properties:
+        IpAddressType: "ipv4"
+        Scheme: "internet-facing"
+        SecurityGroups: !Ref HWSecurityGroupIds
+        SubnetMappings: 
+          - us-east-1a
+          - us-east-1b
+        Tags: 
+          - Key: "Purpose"
+            Value: !Ref Purpose
+          - Key: "Name"
+            Value: "hw-lb-cf"
+        Type: "application"
+
+      HWTargetGroup: 
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        Properties:
+          Name: "HWTargetGr"
+          Port: "80"
+          Protocol: "HTTP"
+          ProtocolVersion: String
+          Tags: 
+            - Key: "Purpose"
+              Value: !Ref Purpose
+            - Key: "Name"
+              Value: "hw-tg-cf"
+          TargetType: "instance"
+          VpcId: "vpc-05a183eaa3164b925"
+
+Outputs:
+  LoadBalancerDNSName:
+    Value: !GetAtt HWApplicationLoadBalancer.DNSName
+    Description: "DNS name of the Application Load Balancer"
