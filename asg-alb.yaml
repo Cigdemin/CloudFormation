@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CF Template for Auto Scaling Group and Application Load Balancer
+Parameters:
+  HWImageID:
+    Description: Please enter Image ID 
+    Type: String
+    Default: "ami-0a3c3a20c09d6f377"
+  HWSecurityGroupIds: 
+    Description: Please enter Security Group ID 
+    Type: String
+    Default: "sg-0bfd0d6f9d24f33cc"
+  HWSubnetID:
+    Description: Please enter Subnet ID 
+    Type: String
+    Default: "subnet-0fcc50d078c9cefda"
+  Purpose:
+    Description: This is the Tag for the Purpose of the task
+    Type: String
+    Default: "Homework"
+Resources:
+  HoweworkLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      ImageId: !Ref HWImageID
+      InstanceType: t2.micro
+      KeyName: "cigdem@hp"
+      NetworkInterfaces: 
+        SubnetId: !Ref HWSubnetID
+      SecurityGroupIds: !Ref HWSecurityGroupIds
+      Tags: 
+        - Key: "Purpose"
+          Value: !Ref Purpose
+        - Key: "Name"
+          Value: "hw-app-lt-cf"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash 
+          yum update -y 
+          yum install httpd -y 
+          echo "home work complete" >> /var/www/html/index.html
+          systemctl start httpd 
+          systemctl enable httpd 
