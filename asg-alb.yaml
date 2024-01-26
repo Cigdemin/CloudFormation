@@ -17,7 +17,7 @@ Parameters:
     Description: This is the Tag for the Purpose of the task
     Type: String
     Default: "Homework"
-    
+
 Resources:
   HoweworkLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -91,6 +91,14 @@ Resources:
               Value: "hw-tg-cf"
           TargetType: "instance"
           VpcId: "vpc-05a183eaa3164b925"
+      HWTGListeners:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        Properties:
+          Certificates: "HTTP"
+          DefaultActions: 
+            - Type: forward
+              TargetGroupArn: !Ref HWTargetGroup
+          LoadBalancerArn: !Ref HWApplicationLoadBalancer
 
 Outputs:
   LoadBalancerDNSName:
