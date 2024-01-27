@@ -42,7 +42,7 @@ Resources:
           systemctl start httpd 
           systemctl enable httpd 
 
-  HWAutoScalingGroup:
+   HWAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       AvailabilityZones: 
@@ -99,7 +99,6 @@ Resources:
             - Type: forward
               TargetGroupArn: !Ref HWTargetGroup
           LoadBalancerArn: !Ref HWApplicationLoadBalancer
-
 Outputs:
   LoadBalancerDNSName:
     Value: !GetAtt HWApplicationLoadBalancer.DNSName
