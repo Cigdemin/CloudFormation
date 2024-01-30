@@ -7,19 +7,17 @@ Parameters:
     Default: "ami-0a3c3a20c09d6f377"
   HWSubnetID:
     Description: Please enter Subnet ID 
-    Type: String
-    Default: "subnet-06c39d3dbf73e9d78"
+    Type: AWS::EC2::Subnet::Id
   HWSecurityGroupIds: 
     Description: Please enter Security Group ID 
-    Type: String
-    Default: "sg-0df56033e7d899536"
+    Type: AWS::EC2::SecurityGroup::Id
   Purpose:
     Description: This is the Tag for the Purpose of the task
     Type: String
     Default: "Homework"
 
 Resources:
-  HoweworkLaunchTemplate:
+  HomeworkLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateName: HWLaunchTemplate
@@ -46,13 +44,14 @@ Resources:
         - us-east-1b
       DesiredCapacity: "3"
       LaunchTemplate: 
-        LaunchTemplateId: !Ref HoweworkLaunchTemplate
-      LoadBalancerNames: 
-        - String
+        LaunchTemplateId: !Ref HomeworkLaunchTemplate
+        Version: !GetAtt HomeworkLaunchTemplate.LatestVersionNumber
       MaxSize: "5"
       MinSize: "2"
       Tags: 
-        - Key: "Purpose"
-          Value: !Ref Purpose
-        - Key: "Name"
-          Value: "hw-asg-cf"
+      - Key: "Purpose"
+        Value: !Ref Purpose
+        PropagateAtLaunch: true
+      - Key: "Name"
+        Value: "hw-asg-cf"
+        PropagateAtLaunch: true
