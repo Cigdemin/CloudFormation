@@ -5,9 +5,6 @@ Parameters:
     Description: Please enter Image ID 
     Type: String
     Default: "ami-0a3c3a20c09d6f377"
-  HWSubnetID:
-    Description: Please enter Subnet ID 
-    Type: AWS::EC2::Subnet::Id
   HWSecurityGroupIds: 
     Description: Please enter Security Group ID 
     Type: AWS::EC2::SecurityGroup::Id
@@ -15,6 +12,9 @@ Parameters:
     Description: This is the Tag for the Purpose of the task
     Type: String
     Default: "Homework"
+  Subnets:
+    Type: 'List<AWS::EC2::Subnet::Id>'
+    Description: A list of subnets for the Auto Scaling group
 
 Resources:
   HomeworkLaunchTemplate:
@@ -39,15 +39,13 @@ Resources:
   HWAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AvailabilityZones: 
-        - us-east-1a
-        - us-east-1b
       DesiredCapacity: "3"
       LaunchTemplate: 
         LaunchTemplateId: !Ref HomeworkLaunchTemplate
         Version: !GetAtt HomeworkLaunchTemplate.LatestVersionNumber
       MaxSize: "5"
       MinSize: "2"
+      VPCZoneIdentifier: !Ref Subnets
       Tags: 
       - Key: "Purpose"
         Value: !Ref Purpose
@@ -55,3 +53,48 @@ Resources:
       - Key: "Name"
         Value: "hw-asg-cf"
         PropagateAtLaunch: true
+        
+  MyLoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      AvailabilityZones:
+      - !Ref Subnets
+      CrossZone: true
+      Listeners:
+      - InstancePort: '80'
+        InstanceProtocol: HTTP
+        LoadBalancerPort: '443'
+        Protocol: HTTPS
+      Tags: 
+      - Key: "Purpose"
+        Value: !Ref Purpose
+        PropagateAtLaunch: true
+      - Key: "Name"
+        Value: "hw-lb-cf"
+        PropagateAtLaunch: true
+
+  Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: Boolean
+      HealthCheckIntervalSeconds: Integer
+      HealthCheckPath: String
+      HealthCheckPort: String
+      HealthCheckProtocol: String
+      HealthCheckTimeoutSeconds: Integer
+      HealthyThresholdCount: Integer
+      IpAddressType: String
+      Matcher: 
+        Matcher
+      Name: String
+      Port: 80
+      Protocol: HTTP
+      ProtocolVersion: String
+      Tags: 
+        - Tag
+      TargetGroupAttributes: 
+        - TargetGroupAttribute
+      Targets: 
+        - TargetDescription
+      TargetType: String
+      UnhealthyThresholdCount: Integer
+      VpcId: String
