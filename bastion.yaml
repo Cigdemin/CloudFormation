@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "WordPress Project Database Setup"
+
+## Parameters ##
+Parameters:
+  BastionSGName:
+    Description: "SG name for Bastion Host"
+    Type: String
+    Default: "aws-wp-prj-bh-sg"
+  RemoteAccessCIDR:
+    Description: "IPv4 for SSH accessing point for Bastion Host "
+    Type: String
+    Default: " 73.36.61.173/32"
+  BastionImageId:
+    Description: "Image ID Bastion Host "
+    Type: String
+    Default: "ami-0277155c3f0ab2930"
+  SSHKEy:
+    Description: "My local SSH Key"
+    Type: AWS::EC2::KeyPair::KeyName
+  InstanceSize:
+    Description: " The size of the database instance"
+    Type: String
+    Default: "t2.micro"
+    AllowedValues:
+     - "t2.nano"
+     - "t2.micro"
+     - "t2.small"
+     - "t2.medium"
+  BastionHostName:
+    Description: "Name Bastion Host"
+    Type: String
+    Default: "aws-wp-prj-bh"  
+
+## Tags ##
+  ProjectTag:
+    Description: "Project Tag"
+    Type: String
+    Default: "aws-wp-project"
+  
+  PurposeTag:
+    Description: "Purpose Tag"
+    Type: String
+    Default: "aws-class"
+  
+  OwnerTag:
+    Description: "Owner Tag"
+    Type: String
+    Default: "cigdem"
+
+##Resources##
+Resources:
+  BastionSecurityGroup:  
+    Type: 'AWS::EC2::SecurityGroup'  
+    Properties:  
+      GroupDescription: Enables SSH Access to Bastion Hosts  
+      VpcId: !ImportValue aws-wp-prj-vpc
+      GroupName: !Ref BastionSGName
+      SecurityGroupIngress:  
+        - IpProtocol: tcp  
+          FromPort: 22  
+          ToPort: 22  
+          CidrIp: !Ref RemoteAccessCIDR
+
+  BastionHostInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref BastionImageId
+      InstanceType: !Ref InstanceSize
+      KeyName: !Ref SSHKEy
+      SecurityGroupIds: 
+        - !Ref BastionSecurityGroup
+      SubnetId: !ImportValue PubSubnet1
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref BastionHostName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      UserData:
+        !Base64
+          Fn::Sub: |
+            #!/bin/bash 
+            yum update -y 
+            yum install httpd -y 
+            echo "home work complete" >> /var/www/html/index.html
+            systemctl start httpd 
+            systemctl enable httpd 
+
+
+##Outputs##
+Outputs:
+  BastionSGId:
+    Description: "Bastion Security Group"
+    Value: !Ref BastionSecurityGroup
+    Export:
+      Name: "BastionSG"
