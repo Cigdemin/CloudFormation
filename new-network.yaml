@@ -1,0 +1,383 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "WordPress Project Network Setup"
+
+## Parameters ##
+Parameters:
+  
+  ## VPC ##
+  VPCCidr:
+    Description: "VPC CIDR"
+    Type: String
+    Default: "10.2.0.0/20"
+  
+  VPCName:
+    Description: "VPC Name"
+    Type: String
+    Default: "aws-wp-prj-vpc"
+
+   ## Public Subnets ##
+  PubSubnet1Cidr:
+    Description: "Public Subnet1 CIDR"
+    Type: String
+    Default: "10.2.0.0/24"
+  
+  PubSubnet1Name:
+    Description: "Public Subnet1 Name"
+    Type: String
+    Default: "pub-aws-wp-prj-subnet1"
+
+  PubSubnet2Cidr:
+    Description: "Public Subnet2 CIDR"
+    Type: String
+    Default: "10.2.2.0/24"
+  
+  PubSubnet2Name:
+    Description: "Public Subnet2 Name"
+    Type: String
+    Default: "pub-aws-wp-prj-subnet2" 
+
+  PubRouteTableName:
+    Description: "Public Route Table Name"
+    Type: String
+    Default: "pub-aws-wp-prj-rt"
+
+## Private Subnets ##
+  PriSubnet1Cidr:
+    Description: "Private Subnet1 CIDR"
+    Type: String
+    Default: "10.2.1.0/24"
+  
+  PriSubnet1Name:
+    Description: "Private Subnet1 Name"
+    Type: String
+    Default: "pri-aws-wp-prj-subnet1"
+
+  PriSubnet2Cidr:
+    Description: "Private Subnet2 CIDR"
+    Type: String
+    Default: "10.2.3.0/24"
+  
+  PriSubnet2Name:
+    Description: "Private Subnet1 Name"
+    Type: String
+    Default: "pri-aws-wp-prj-subnet2"
+
+  PriSubnet3Cidr:
+    Description: "Private Subnet3 CIDR"
+    Type: String
+    Default: "10.2.5.0/24"
+  
+  PriSubnet3Name:
+    Description: "Private Subnet3 Name"
+    Type: String
+    Default: "pri-aws-wp-prj-subnet3"
+
+  PriSubnet4Cidr:
+    Description: "Private Subnet4 CIDR"
+    Type: String
+    Default: "10.2.7.0/24"
+  
+  PriSubnet4Name:
+    Description: "Private Subnet4 Name"
+    Type: String
+    Default: "pri-aws-wp-prj-subnet4"
+
+  PriRouteTableName:
+    Description: "Private Route Table Name"
+    Type: String
+    Default: "pri-aws-wp-prj-rt"
+  
+  PriRouteTableName:
+    Description: "Private Route Table Name"
+    Type: String
+    Default: "pri-aws-wp-prj-rt"
+  
+  NATGWName:
+    Description: "NAT Gateway Name"
+    Type: String
+    Default: "aws-wp-prj-ngw"
+    
+  ## Tags ##
+  ProjectTag:
+    Description: "Project Tag"
+    Type: String
+    Default: "aws-wp-project"
+  
+  PurposeTag:
+    Description: "Purpose Tag"
+    Type: String
+    Default: "aws-learning"
+  
+  OwnerTag:
+    Description: "Owner Tag"
+    Type: String
+    Default: "cigdem"
+
+
+## Resources ##
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCidr
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref VPCName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+
+  
+  VPCIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref VPCName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+    
+  VPCIGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref VPCIGW
+      VpcId: !Ref VPC
+
+  # Public Subnets 
+  PubSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a # Pub Subnet1 - us-east-1a
+      CidrBlock: !Ref PubSubnet1Cidr
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PubSubnet1Name
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+
+  PubSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b # Pub Subnet2 - us-east-1b
+      CidrBlock: !Ref PubSubnet2Cidr
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PubSubnet2Name
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+
+  #Public Route Table, Route
+  PubRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PubRouteTableName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+  
+  PubRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref VPCIGW
+      RouteTableId: !Ref PubRouteTable
+      
+  PubSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PubRouteTable
+      SubnetId: !Ref PubSubnet1
+
+  PubSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PubRouteTable
+      SubnetId: !Ref PubSubnet2
+
+#Private Subnets 
+  PriSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a # Private Subnet1 - us-east-1a
+      CidrBlock: !Ref PriSubnet1Cidr
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PriSubnet1Name
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+
+  PriSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b # Private Subnet2 - us-east-1b
+      CidrBlock: !Ref PriSubnet2Cidr
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PriSubnet2Name
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+
+  PriSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a # Private Subnet3 - us-east-1a
+      CidrBlock: !Ref PriSubnet3Cidr
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PriSubnet3Name
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+
+  PriSubnet4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b # Private Subnet4 - us-east-1a
+      CidrBlock: !Ref PriSubnet4Cidr
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PriSubnet4Name
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+
+  WPprjNGW:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      ConnectivityType: private
+      SubnetId: !Ref PubSubnet1
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref NATGWName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+
+
+ # Private Route Table and subnet assosiation
+  PriRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref PriRouteTableName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      VpcId: !Ref VPC
+      
+  PriRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId: !Ref WPprjNGW  
+      RouteTableId: !Ref PriRouteTable
+
+  PriSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PriRouteTable
+      SubnetId: !Ref PriSubnet1
+
+  PriSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PriRouteTable
+      SubnetId: !Ref PriSubnet2
+
+  PriSubnet3Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PriRouteTable
+      SubnetId: !Ref PriSubnet3
+
+  PriSubnet4Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PriRouteTable
+      SubnetId: !Ref PriSubnet4
+
+## Outputs ##
+Outputs:
+  VPCID:
+    Description: "VPC Name"
+    Value: !Ref VPC
+    Export:
+      Name: "aws-wp-prj-vpc"
+  PriSubnet1Id:
+    Description: "Private Subnet Name 1"
+    Value: !Ref PriSubnet1
+    Export:
+      Name: "PriSubnet1"
+  PriSubnet2Id:
+    Description: "Private Subnet Name 2"
+    Value: !Ref PriSubnet2
+    Export:
+      Name: "PriSubnet2"
+  PriSubnet3Id:
+    Description: "Private Subnet Name 3"
+    Value: !Ref PriSubnet3
+    Export:
+      Name: "PriSubnet3"
+  PriSubnet4Id:
+    Description: "Private Subnet Name 4"
+    Value: !Ref PriSubnet4
+    Export:
+      Name: "PriSubnet4"
+  PubSubnet1Id:
+    Description: "Public Subnet Name 1"
+    Value: !Ref PubSubnet1
+    Export:
+      Name: "PubSubnet1"
+  PubSubnet2Id:
+    Description: "Public Subnet Name 1"
+    Value: !Ref PubSubnet2
+    Export:
+      Name: "PubSubnet2"

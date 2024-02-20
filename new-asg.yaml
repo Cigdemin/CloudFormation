@@ -15,7 +15,18 @@ Parameters:
   Subnets:
     Type: 'List<AWS::EC2::Subnet::Id>'
     Description: A list of subnets for the Auto Scaling group
-
+Metadata:
+  AWS::CloudFormation::Init:
+    config:
+      tags:
+        - Key: "Project" 
+          Value: "aws-wp-project"
+        - Key: "Purpose" 
+          Value: "aws-class"
+        - Key: "Owner" 
+          Value: "cigdem"
+        - Key: "GitUrl"
+          Value: "HTTPS URL to GitHub Code"
 Resources:
   HomeworkLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -36,65 +47,65 @@ Resources:
             sudo systemctl start httpd 
             sudo systemctl enable httpd
 
-  HWAutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      DesiredCapacity: "3"
-      LaunchTemplate: 
-        LaunchTemplateId: !Ref HomeworkLaunchTemplate
-        Version: !GetAtt HomeworkLaunchTemplate.LatestVersionNumber
-      MaxSize: "5"
-      MinSize: "2"
-      VPCZoneIdentifier: !Ref Subnets
-      Tags: 
-      - Key: "Purpose"
-        Value: !Ref Purpose
-        PropagateAtLaunch: true
-      - Key: "Name"
-        Value: "hw-asg-cf"
-        PropagateAtLaunch: true
+  # HWAutoScalingGroup:
+  #   Type: AWS::AutoScaling::AutoScalingGroup
+  #   Properties:
+  #     DesiredCapacity: "3"
+  #     LaunchTemplate: 
+  #       LaunchTemplateId: !Ref HomeworkLaunchTemplate
+  #       Version: !GetAtt HomeworkLaunchTemplate.LatestVersionNumber
+  #     MaxSize: "5"
+  #     MinSize: "2"
+  #     VPCZoneIdentifier: !Ref Subnets
+  #     Tags: 
+  #     - Key: "Purpose"
+  #       Value: !Ref Purpose
+  #       PropagateAtLaunch: true
+  #     - Key: "Name"
+  #       Value: "hw-asg-cf"
+  #       PropagateAtLaunch: true
         
-  MyLoadBalancer:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
-    Properties:
-      AvailabilityZones:
-      - !Ref Subnets
-      CrossZone: true
-      Listeners:
-      - InstancePort: '80'
-        InstanceProtocol: HTTP
-        LoadBalancerPort: '443'
-        Protocol: HTTPS
-      Tags: 
-      - Key: "Purpose"
-        Value: !Ref Purpose
-        PropagateAtLaunch: true
-      - Key: "Name"
-        Value: "hw-lb-cf"
-        PropagateAtLaunch: true
+  # MyLoadBalancer:
+  #   Type: AWS::ElasticLoadBalancing::LoadBalancer
+  #   Properties:
+  #     AvailabilityZones:
+  #     - !Ref Subnets
+  #     CrossZone: true
+  #     Listeners:
+  #     - InstancePort: '80'
+  #       InstanceProtocol: HTTP
+  #       LoadBalancerPort: '443'
+  #       Protocol: HTTPS
+  #     Tags: 
+  #     - Key: "Purpose"
+  #       Value: !Ref Purpose
+  #       PropagateAtLaunch: true
+  #     - Key: "Name"
+  #       Value: "hw-lb-cf"
+  #       PropagateAtLaunch: true
 
-  Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      HealthCheckEnabled: Boolean
-      HealthCheckIntervalSeconds: Integer
-      HealthCheckPath: String
-      HealthCheckPort: String
-      HealthCheckProtocol: String
-      HealthCheckTimeoutSeconds: Integer
-      HealthyThresholdCount: Integer
-      IpAddressType: String
-      Matcher: 
-        Matcher
-      Name: String
-      Port: 80
-      Protocol: HTTP
-      ProtocolVersion: String
-      Tags: 
-        - Tag
-      TargetGroupAttributes: 
-        - TargetGroupAttribute
-      Targets: 
-        - TargetDescription
-      TargetType: String
-      UnhealthyThresholdCount: Integer
-      VpcId: String
+  # Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  #   Properties:
+  #     HealthCheckEnabled: Boolean
+  #     HealthCheckIntervalSeconds: Integer
+  #     HealthCheckPath: String
+  #     HealthCheckPort: String
+  #     HealthCheckProtocol: String
+  #     HealthCheckTimeoutSeconds: Integer
+  #     HealthyThresholdCount: Integer
+  #     IpAddressType: String
+  #     Matcher: 
+  #       Matcher
+  #     Name: String
+  #     Port: 80
+  #     Protocol: HTTP
+  #     ProtocolVersion: String
+  #     Tags: 
+  #       - Tag
+  #     TargetGroupAttributes: 
+  #       - TargetGroupAttribute
+  #     Targets: 
+  #       - TargetDescription
+  #     TargetType: String
+  #     UnhealthyThresholdCount: Integer
+  #     VpcId: String
