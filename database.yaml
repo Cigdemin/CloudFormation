@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "WordPress Project Database Setup"
+
+## Parameters ##
+Parameters:
+  DBSGName:
+    Description: "SG name for RDS"
+    Type: String
+    Default: "aws-wp-prj-db-sg"
+  DBInstanceSize:
+    Description: " The size of the database instance"
+    Type: String
+    Default: "db.t3.micro"
+    AllowedValues:
+     - "db.t3.micro"
+     - "db.t3.small"
+     - "db.t3.medium"
+  DBStorage:
+    Description: "Database storage"
+    Type: String
+    Default: "20"
+  DBInstanceName:
+    Description: "The name follows by naming requirements"
+    Type: String
+    Default: "AwsWpRrjDb"
+  DBEngine:
+    Description: "Database Engine Type"
+    Type: String
+    Default: "mariadb"
+  DBEngineVersion:
+    Description: "Database Engine Version"
+    Type: String
+    Default: "10.6"
+  DBUserName:
+    Description: "Username for Mysql DB Access"
+    Type: String
+    Default: "admin"
+  DBPassword: #When you are running your stack you should specify your database password
+    NoEcho: true
+    Description: "Database Master Password"
+    Type: String
+    MinLength: 4
+    MaxLength: 12
+    AllowedPattern: '[a-zA-Z0-9]*$'
+  DBSubnetGroupName:
+    Description: "Username for Mysql DB Access"
+    Type: String
+    Default: "aws-wp-prj-subnet-group" 
+
+
+## Tags ##
+  ProjectTag:
+    Description: "Project Tag"
+    Type: String
+    Default: "aws-wp-project"
+  
+  PurposeTag:
+    Description: "Purpose Tag"
+    Type: String
+    Default: "aws-learning"
+  
+  OwnerTag:
+    Description: "Owner Tag"
+    Type: String
+    Default: "cigdem"
+
+
+
+#Database - RDS instance and Security Group for RDS
+
+Resources:
+  DBInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "RDS intance SG"
+      GroupName: !Ref DBSGName
+      VpcId: !ImportValue aws-wp-prj-vpc
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref DBSGName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+
+
+
+  # DBRDSSecurityGroup:
+  #   Type: AWS::RDS::DBSecurityGroup
+  #   Properties:
+  #     GroupDescription: "Ingress for RDS security group"
+  #     DBSecurityGroupIngress: 
+  #       - EC2SecurityGroupId: !GetAtt DBInstanceSecurityGroup.GroupId
+
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: !Ref DBSubnetGroupName
+      DBSubnetGroupDescription: "WP Project Database subnet Group"
+      SubnetIds:
+        - !ImportValue PriSubnet1
+        - !ImportValue PriSubnet2
+      Tags: 
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      
+
+  RDSDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: !Ref DBStorage
+      DBInstanceClass: !Ref DBInstanceSize
+      DBName: !Ref DBInstanceName
+      VPCSecurityGroups: 
+       - !Ref DBInstanceSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Engine: !Ref DBEngine
+      EngineVersion: !Ref DBEngineVersion
+      MasterUsername: !Ref DBUserName
+      MasterUserPassword: !Ref DBPassword
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref DBInstanceName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+
+
+Outputs:
+  DBSecurityGroups:
+    Description: "DB Security group information"
+    Value: !Ref DBInstanceSecurityGroup
+  DBPassword:
+    Description: "DB access password"
+    Value: !Ref DBPassword
+  RDSEndpoint:
+    Value: !GetAtt RDSDBInstance.Endpoint.Address
+    Description: RDS instance endpoint
