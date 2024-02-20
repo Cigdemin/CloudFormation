@@ -1,0 +1,329 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "WordPress Project Database Setup"
+
+## Parameters ##
+Parameters:
+  AppDomainName:
+    Description: "Domain name for Application"
+    Type: String
+    Default: "cigdemc.com"
+  CertificateName:
+    Description: "Certificate for HTTPS connection for Domain name for Application"
+    Type: String
+    Default: "aws-wp-prj-acm"
+  HostedZoneId:
+    Type: String
+    Description: 'The Hosted Zone ID of your Route 53 domain'
+    Default: "Z09734273IGYRKY1I8BI"
+  LTInstancesSGName:
+    Description: "SG name for Bastion Host"
+    Type: String
+    Default: "aws-wp-prj-lt-sg"
+  LTInstancesName:
+    Description: "SG name for Bastion Host"
+    Type: String
+    Default: "aws-wp-prj-lt-ec2"
+  LTName:
+    Description: "Launch template name for Application"
+    Type: String
+    Default: "aws-wp-prj-lt"
+  Shotdownbehavior:
+    Description: "Instance Shutdown behavior"
+    Type: String
+    Default: "terminate"
+    AllowedValues:
+      - stop
+      - terminate
+  LTImageId:
+    Description: "Image ID Bastion Host "
+    Type: String
+    Default: "ami-0e731c8a588258d0d"
+  SSHKey:
+    Description: "Bastion Instance SSH Key"
+    Type: AWS::EC2::KeyPair::KeyName
+  LTInstanceSize:
+    Description: " The size of the applocation instances"
+    Type: String
+    Default: "t2.micro"
+    AllowedValues:
+     - "t2.micro"
+     - "t2.small"
+     - "t2.medium"
+  ASGName:
+    Description: "App AutoScaling Group Name"
+    Type: String
+    Default: "aws-wp-prj-asg"  
+  AppLBSGName:
+    Description: "App Load Balancer Security Group Name"
+    Type: String
+    Default: "aws-wp-prj-alb-sg"
+  AppLoadBalancerName:
+    Description: "Application Load Balancer Name"
+    Type: String
+    Default: "aws-wp-prj-alb" 
+  AppLBTargerGroupName:
+    Description: "Application Load Balancer Target Group Name"
+    Type: String
+    Default: "aws-wp-prj-alb-tg" 
+
+
+
+## Tags ##
+  ProjectTag:
+    Description: "Project Tag"
+    Type: String
+    Default: "aws-wp-project"
+  
+  PurposeTag:
+    Description: "Purpose Tag"
+    Type: String
+    Default: "aws-learning"
+  
+  OwnerTag:
+    Description: "Owner Tag"
+    Type: String
+    Default: "cigdem"
+
+##Resources##
+Resources:
+  AppCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref AppDomainName
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref CertificateName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      ValidationMethod: DNS
+
+  AppRoute53Records:
+    Type: 'AWS::Route53::RecordSet'
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref AppDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt AppLoadBalancer.DNSName
+        HostedZoneId: !GetAtt AppLoadBalancer.CanonicalHostedZoneID
+
+
+  
+
+  AppLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData: 
+        ImageId: !Ref LTImageId
+        InstanceInitiatedShutdownBehavior: !Ref Shotdownbehavior
+        InstanceType: !Ref LTInstanceSize
+        KeyName: !Ref SSHKey
+        SecurityGroupIds: 
+          - !Ref AppInstanceSecurityGroup
+        SecurityGroupIds:
+          - !ImportValue BastionSG
+        TagSpecifications: 
+          - ResourceType: instance
+            Tags: 
+            - Key: 'Name'
+              Value: !Ref LTInstancesName
+            - Key: 'Project'
+              Value: !Ref ProjectTag
+            - Key: 'Purpose'
+              Value: !Ref PurposeTag
+            - Key: 'Owner'
+              Value: !Ref OwnerTag
+        UserData: 
+          Fn::Base64: |
+            #!/bin/bash 
+
+            # Update and install dependencies
+            sudo dnf update -y
+            sudo dnf install -y httpd wget php-fpm php-mysqli php-json php php-devel
+            sudo dnf install mariadb105 -y
+
+            # Start and enable Apache
+            sudo systemctl start httpd
+            sudo systemctl enable httpd
+            sudo systemctl is-enabled httpd
+
+            # Install wget
+            sudo yum install -y wget
+
+            #Install Wordpress packages
+            wget https://wordpress.org/latest.tar.gz
+            tar -zxvf latest.tar.gz
+            sudo mv wordpress/* /var/www/html/
+            sudo systemctl restart httpd
+            echo "WordPress installation completed."
+
+      LaunchTemplateName: !Ref LTName
+      TagSpecifications:
+        - ResourceType: launch-template
+          Tags: 
+            - Key: 'Project'
+              Value: !Ref ProjectTag
+            - Key: 'Purpose'
+              Value: !Ref PurposeTag
+            - Key: 'Owner'
+              Value: !Ref OwnerTag
+      VersionDescription: "App Version 1"
+
+  AppInstanceSecurityGroup:  
+    Type: 'AWS::EC2::SecurityGroup'  
+    Properties:  
+      GroupDescription: Enables SSH Access from Bastion Hosts and access from Load Balancer SG 
+      VpcId: !ImportValue aws-wp-prj-vpc
+      GroupName: !Ref LTInstancesSGName
+      SecurityGroupIngress:  
+        - IpProtocol: tcp  
+          FromPort: 80  
+          ToPort: 80  
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp  
+          FromPort: 22  
+          ToPort: 22  
+          SourceSecurityGroupId: !ImportValue BastionSG
+        - IpProtocol: tcp  
+          FromPort: 80  
+          ToPort: 80  
+          SourceSecurityGroupId: !Ref AppLBSecurityGroup
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref LTInstancesSGName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+
+
+  AppAutoScalinGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Ref ASGName
+      DesiredCapacity: "2"
+      HealthCheckGracePeriod: 300
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref AppLaunchTemplate
+        Version: !GetAtt AppLaunchTemplate.LatestVersionNumber
+      MaxSize: "3"
+      MinSize: "1"
+      VPCZoneIdentifier: 
+        - !ImportValue PriSubnet3
+        - !ImportValue PriSubnet4
+      TargetGroupARNs: 
+        - !Ref AppLBTargetGroup
+      Tags: 
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+          PropagateAtLaunch: true
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+          PropagateAtLaunch: true
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+          PropagateAtLaunch: true
+
+
+  AppLBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'  
+    Properties:  
+      GroupDescription: Enables Internet acces for for 80 and 443
+      VpcId: !ImportValue aws-wp-prj-vpc
+      GroupName: !Ref AppLBSGName
+      SecurityGroupIngress:  
+        - IpProtocol: tcp  
+          FromPort: 80  
+          ToPort: 80  
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp  
+          FromPort: 443  
+          ToPort: 443  
+          CidrIp: "0.0.0.0/0"
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref AppLBSGName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+
+
+  AppLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Ref AppLoadBalancerName
+      SecurityGroups: 
+        - !Ref AppLBSecurityGroup
+      Subnets: 
+        - !ImportValue PriSubnet3
+        - !ImportValue PriSubnet4
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref AppLoadBalancerName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      Type: application
+      
+  AppLBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Ref AppLBTargerGroupName
+      Port: 80
+      Protocol: HTTP
+      VpcId: !ImportValue aws-wp-prj-vpc
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: "/"
+      HealthCheckPort: "traffic-port"
+      TargetType: "instance"
+      Tags: 
+        - Key: 'Name'
+          Value: !Ref AppLBTargerGroupName
+        - Key: 'Project'
+          Value: !Ref ProjectTag
+        - Key: 'Purpose'
+          Value: !Ref PurposeTag
+        - Key: 'Owner'
+          Value: !Ref OwnerTag
+      Matcher:
+        HttpCode: "302"
+
+
+  AppLBListener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      LoadBalancerArn: !GetAtt AppLoadBalancer.LoadBalancerArn
+      Port: 443
+      Protocol: HTTPS
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !GetAtt AppLBTargetGroup.TargetGroupArn
+      Certificates:
+        - CertificateArn: !Ref AppCertificate
+
+  AppListenerRule:
+    Type: "AWS::ElasticLoadBalancingV2::ListenerRule"
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref AppLBTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/"
+      ListenerArn: !Ref AppLBListener
+      Priority: 1
+
